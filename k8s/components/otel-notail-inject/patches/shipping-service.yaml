@@ -1,0 +1,12 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shipping-service
+  namespace: distributed-tracing
+  annotations:
+    sidecar.opentelemetry.io/inject: shipping-service-notail
+spec:
+  template:
+    metadata:
+      annotations:
+        sidecar.opentelemetry.io/inject: shipping-service-notail

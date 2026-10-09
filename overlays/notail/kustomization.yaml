@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Full stack using no-tail-sampling OTC sidecars.
+#
+#   kubectl apply -k overlays/notail
+#
+# Default (tail sampling) remains:
+#
+#   kubectl apply -k k8s
+#
+resources:
+- ../../k8s
+
+components:
+- ../../k8s/components/otel-notail-inject

@@ -1,0 +1,17 @@
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: default
+  namespace: distributed-tracing
+spec:
+  metrics:
+    - overrides:
+        - match:
+            metric: ALL_METRICS
+        - disabled: false
+      providers:
+        - name: prometheus
+  tracing:
+    - providers:
+        - name: local
+      randomSamplingPercentage: 100

@@ -1,0 +1,9 @@
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: otel-collector.local
+spec:
+  host: otel-collector.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE

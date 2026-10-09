@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- namespace.yml
+- sidecar.yml
+- se.yml
+- dr.yml
+- peerAuthentication.yml
+- otc/
+- sa/
+- services/
+- deploy/
+- gateway/
+
+images:
+- name: localhost/distributed-tracing
+  newName: quay.io/rhn_support_milang/distributed-tracing
+  newTag: v1.0.0
+

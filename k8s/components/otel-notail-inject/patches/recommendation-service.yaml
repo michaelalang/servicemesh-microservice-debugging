@@ -1,0 +1,12 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: recommendation-service
+  namespace: distributed-tracing
+  annotations:
+    sidecar.opentelemetry.io/inject: recommendation-service-notail
+spec:
+  template:
+    metadata:
+      annotations:
+        sidecar.opentelemetry.io/inject: recommendation-service-notail

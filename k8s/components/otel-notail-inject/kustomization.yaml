@@ -1,0 +1,28 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+# Switch OpenTelemetry sidecar injection from <name> (tail sampling)
+# to <name>-notail (no tail sampling). Both OTC CRs are always defined;
+# only these annotations select which sidecar is injected.
+patches:
+- path: patches/analytics-service.yaml
+- path: patches/api-gateway.yaml
+- path: patches/audit-service.yaml
+- path: patches/auth-service.yaml
+- path: patches/backend.yaml
+- path: patches/billing-service.yaml
+- path: patches/cart-service.yaml
+- path: patches/catalog-service.yaml
+- path: patches/frontend.yaml
+- path: patches/inventory-service.yaml
+- path: patches/notification-service.yaml
+- path: patches/order-service.yaml
+- path: patches/payment-service.yaml
+- path: patches/recommendation-service.yaml
+- path: patches/reporting-service.yaml
+- path: patches/review-service.yaml
+- path: patches/search-service.yaml
+- path: patches/session-service.yaml
+- path: patches/shipping-service.yaml
+- path: patches/user-service.yaml
+- path: patches/gateway-v1.yaml

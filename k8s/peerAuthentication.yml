@@ -1,0 +1,13 @@
+apiVersion: security.istio.io/v1
+kind: PeerAuthentication
+metadata:
+  name: permissive-frontend
+spec:
+  mtls:
+    mode: STRICT
+  portLevelMtls:
+    '8080':
+      mode: PERMISSIVE
+  selector:
+    matchLabels:
+      app: frontend

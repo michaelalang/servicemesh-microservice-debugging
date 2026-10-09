@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    sidecar.istio.io/nativeSidecar: 'true'
+    sidecar.opentelemetry.io/inject: payment-service
+  name: payment-service
+  namespace: distributed-tracing
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: payment-service
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/nativeSidecar: 'true'
+        sidecar.opentelemetry.io/inject: payment-service
+      creationTimestamp: null
+      labels:
+        app: payment-service
+    spec:
+      containers:
+        - env:
+            - name: SERVICE_NAME
+              value: payment-service
+            - name: PORT
+              value: '8080'
+            - name: NEXT_APP
+              value: http://billing-service:8080
+          image: localhost/distributed-tracing:v1.0.0
+          imagePullPolicy: Always
+          name: payment-service
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: payment-service
+      serviceAccountName: payment-service
+      terminationGracePeriodSeconds: 30

@@ -1,0 +1,11 @@
+apiVersion: v1
+data:
+  tempo.yaml: "apiVersion: 1\ndatasources:\n  - name: Tempo\n    type: tempo\n   \
+    \ access: proxy\n    uid: tempo\n    url: http://tempo.distributed-tracing.svc.cluster.local:3200\n\
+    \    isDefault: false\n    editable: true\n    jsonData:\n      nodeGraph:\n \
+    \       enabled: true\n      search:\n        hide: false"
+immutable: false
+kind: ConfigMap
+metadata:
+  name: grafanadatasource
+  namespace: distributed-tracing

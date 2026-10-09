@@ -1,0 +1,19 @@
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: frontend-service
+spec:
+  gateways:
+    - distributed-tracing/gateway-v1
+  hosts:
+    - GATEWAY_HOSTNAME
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: frontend.distributed-tracing.svc.cluster.local
+            port:
+              number: 8080
+          weight: 100

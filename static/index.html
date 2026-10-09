@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en" class="pf-v6-theme-dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Distributed Tracing Workshop</title>
+  <link rel="stylesheet" href="https://unpkg.com/@patternfly/patternfly@6/patternfly.min.css" />
+  <link rel="stylesheet" href="https://unpkg.com/@patternfly/patternfly@6/patternfly-addons.css" />
+  <style>
+    :root {
+      --dt-canvas: #f2f4f8;
+      --dt-ink: #1b1d21;
+      --dt-muted: #4f5666;
+      --dt-card-bg: #ffffff;
+      --dt-card-border: #c5c6c8;
+      --dt-result-bg: #0f1720;
+      --dt-result-fg: #d7e0ea;
+      --dt-warn-bg: #fdf7e7;
+      --dt-warn-border: #f0ab00;
+      --dt-warn-fg: #795600;
+      --dt-max: 56rem;
+    }
+    html.pf-v6-theme-dark {
+      --dt-canvas: #0f1215;
+      --dt-ink: #f0f0f0;
+      --dt-muted: #b8bbbe;
+      --dt-card-bg: #1b1d21;
+      --dt-card-border: #4f5255;
+      --dt-result-bg: #0b0d10;
+      --dt-result-fg: #e0e4ea;
+      --dt-warn-bg: #3d2e00;
+      --dt-warn-border: #c58c00;
+      --dt-warn-fg: #f9e29b;
+    }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(0, 102, 204, 0.10), transparent 35%),
+        linear-gradient(180deg, color-mix(in srgb, var(--dt-canvas) 70%, #dbe5f2) 0%, var(--dt-canvas) 45%, var(--dt-canvas) 100%);
+      color: var(--dt-ink);
+      min-height: 100vh;
+    }
+    html.pf-v6-theme-dark body {
+      background:
+        radial-gradient(circle at top left, rgba(57, 135, 237, 0.16), transparent 40%),
+        linear-gradient(180deg, #15191e 0%, var(--dt-canvas) 50%, #0c0f12 100%);
+    }
+    .dt-shell {
+      width: min(100% - 2rem, var(--dt-max));
+      margin: 0 auto;
+      padding: 1.5rem 0 3rem;
+    }
+    .dt-brand {
+      font-family: "Red Hat Display", "Helvetica Neue", Arial, sans-serif;
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin: 0;
+    }
+    .dt-sub {
+      margin: 0.75rem 0 0;
+      color: var(--dt-muted);
+      max-width: 42rem;
+      line-height: 1.5;
+    }
+    .dt-muted {
+      color: var(--dt-muted);
+      font-size: 0.9rem;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+    .dt-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      margin-top: 1.75rem;
+    }
+    .dt-card {
+      background: var(--dt-card-bg);
+      border: 1px solid var(--dt-card-border);
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+      padding: 1.25rem 1.5rem 1.5rem;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .dt-card h2 {
+      margin: 0 0 0.35rem;
+      font-size: 1.25rem;
+    }
+    .dt-card .dt-muted { margin: 0 0 1rem; }
+    .dt-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+      width: 100%;
+    }
+    .dt-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      width: 100%;
+    }
+    .dt-field label {
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+    .dt-field .pf-v6-c-form-control {
+      width: 100%;
+      max-width: 100%;
+      display: grid;
+    }
+    .dt-field .pf-v6-c-form-control > input,
+    .dt-field .pf-v6-c-form-control > select {
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+    .dt-actions { margin-top: 0.25rem; display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+    .dt-result {
+      margin: 1rem 0 0;
+      max-height: 22rem;
+      overflow: auto;
+      background: var(--dt-result-bg);
+      color: var(--dt-result-fg);
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.8rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .pf-v6-c-masthead {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .pf-v6-c-masthead__brand {
+      font-family: "Red Hat Display", "Helvetica Neue", Arial, sans-serif;
+      font-weight: 700;
+      font-size: 1.15rem;
+      padding: 0.85rem 1.25rem;
+    }
+    .dt-masthead-actions {
+      padding-inline-end: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .dt-progress {
+      display: none;
+      margin: 0 0 1rem;
+      padding: 0.85rem 1rem;
+      border: 1px solid var(--dt-warn-border);
+      background: var(--dt-warn-bg);
+      color: var(--dt-warn-fg);
+      border-radius: 8px;
+    }
+    .dt-progress.is-active { display: block; }
+    .dt-progress strong { display: block; margin-bottom: 0.25rem; }
+    .dt-progress-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.25rem;
+      font-variant-numeric: tabular-nums;
+      font-size: 0.9rem;
+    }
+    .dt-spinner {
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid color-mix(in srgb, var(--dt-warn-fg) 30%, transparent);
+      border-top-color: var(--dt-warn-fg);
+      border-radius: 50%;
+      display: inline-block;
+      vertical-align: -0.15rem;
+      margin-inline-end: 0.4rem;
+      animation: dt-spin 0.8s linear infinite;
+    }
+    @keyframes dt-spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <header class="pf-v6-c-masthead" role="banner">
+    <div class="pf-v6-c-masthead__main">
+      <span class="pf-v6-c-masthead__brand">Distributed Tracing</span>
+    </div>
+    <div class="dt-masthead-actions">
+      <button id="themeToggle" class="pf-v6-c-button pf-m-secondary" type="button" aria-pressed="false">
+        Dark mode
+      </button>
+    </div>
+  </header>
+
+  <div class="dt-shell">
+    <h1 class="dt-brand">Distributed Tracing</h1>
+    <p class="dt-sub">
+      Trigger the multi-hop fault/delay chain, a CQRS command/query flow, or an
+      Inbox/Outbox relay. CQRS and Outbox delays run for 2–5 minutes — leave the
+      page open until the run finishes.
+    </p>
+    <p class="dt-muted" id="metaLine">Loading service metadata…</p>
+
+    <div class="dt-stack">
+      <section class="dt-card">
+        <h2>Fault / Delay chain</h2>
+        <p class="dt-muted" id="chainDelayHint">One service fails; another is delayed within the configured window.</p>
+        <form id="chainForm" class="dt-form">
+          <div class="dt-field">
+            <label for="faultService">Fault service</label>
+            <span class="pf-v6-c-form-control"><select id="faultService"></select></span>
+          </div>
+          <div class="dt-field">
+            <label for="delayService">Delay service</label>
+            <span class="pf-v6-c-form-control"><select id="delayService"></select></span>
+          </div>
+          <div class="dt-field">
+            <label for="delaySeconds" id="delaySecondsLabel">Delay seconds</label>
+            <span class="pf-v6-c-form-control">
+              <input id="delaySeconds" type="number" min="1.01" max="60" step="0.01" placeholder="random" />
+            </span>
+          </div>
+          <div class="dt-actions">
+            <button class="pf-v6-c-button pf-m-primary" type="submit">Run chain</button>
+          </div>
+        </form>
+        <pre class="dt-result" id="chainResult">Awaiting run…</pre>
+      </section>
+
+      <section class="dt-card">
+        <h2>CQRS</h2>
+        <p class="dt-muted">Command on order-service, query on catalog-service. Delay is 2–5 minutes.</p>
+        <div id="cqrsProgress" class="dt-progress" role="status" aria-live="polite">
+          <strong><span class="dt-spinner" aria-hidden="true"></span>CQRS run in progress — do not refresh</strong>
+          <div class="dt-progress-meta">
+            <span>Elapsed: <span id="cqrsElapsed">0s</span></span>
+            <span>Expected delay window: 2–5 minutes</span>
+            <span id="cqrsProgressHint">Waiting for command + query to finish…</span>
+          </div>
+        </div>
+        <form id="cqrsForm" class="dt-form">
+          <div class="dt-field">
+            <label for="cqrsItem">Item</label>
+            <span class="pf-v6-c-form-control"><input id="cqrsItem" value="tracing-widget" required /></span>
+          </div>
+          <div class="dt-field">
+            <label for="cqrsQty">Quantity</label>
+            <span class="pf-v6-c-form-control"><input id="cqrsQty" type="number" min="1" value="2" required /></span>
+          </div>
+          <div class="dt-field">
+            <label for="cqrsFault">Fault service</label>
+            <span class="pf-v6-c-form-control"><select id="cqrsFault"></select></span>
+          </div>
+          <div class="dt-field">
+            <label for="cqrsDelay">Delay service</label>
+            <span class="pf-v6-c-form-control"><select id="cqrsDelay"></select></span>
+          </div>
+          <div class="dt-field">
+            <label for="cqrsDelaySeconds">Delay seconds (120–300)</label>
+            <span class="pf-v6-c-form-control">
+              <input id="cqrsDelaySeconds" type="number" min="120" max="300" step="1" placeholder="random" />
+            </span>
+          </div>
+          <div class="dt-actions">
+            <button id="cqrsSubmit" class="pf-v6-c-button pf-m-primary" type="submit">Send command + query</button>
+          </div>
+        </form>
+        <pre class="dt-result" id="cqrsResult">Awaiting run…</pre>
+      </section>
+
+      <section class="dt-card">
+        <h2>Inbox / Outbox</h2>
+        <p class="dt-muted">Outbox on frontend, inbox on audit-service. Delay is 2–5 minutes.</p>
+        <div id="outboxProgress" class="dt-progress" role="status" aria-live="polite">
+          <strong><span class="dt-spinner" aria-hidden="true"></span>Inbox / Outbox run in progress — do not refresh</strong>
+          <div class="dt-progress-meta">
+            <span>Elapsed: <span id="outboxElapsed">0s</span></span>
+            <span>Expected delay window: 2–5 minutes</span>
+            <span id="outboxProgressHint">Waiting for outbox relay + inbox processing…</span>
+          </div>
+        </div>
+        <form id="outboxForm" class="dt-form">
+          <div class="dt-field">
+            <label for="outboxNote">Message note</label>
+            <span class="pf-v6-c-form-control"><input id="outboxNote" value="ship-confirmation" required /></span>
+          </div>
+          <div class="dt-field">
+            <label for="outboxFault">Fault service</label>
+            <span class="pf-v6-c-form-control"><select id="outboxFault"></select></span>
+          </div>
+          <div class="dt-field">
+            <label for="outboxDelay">Delay service</label>
+            <span class="pf-v6-c-form-control"><select id="outboxDelay"></select></span>
+          </div>
+          <div class="dt-field">
+            <label for="outboxDelaySeconds">Delay seconds (120–300)</label>
+            <span class="pf-v6-c-form-control">
+              <input id="outboxDelaySeconds" type="number" min="120" max="300" step="1" placeholder="random" />
+            </span>
+          </div>
+          <div class="dt-actions">
+            <button id="outboxSubmit" class="pf-v6-c-button pf-m-primary" type="submit">Enqueue + deliver</button>
+          </div>
+        </form>
+        <pre class="dt-result" id="outboxResult">Awaiting run…</pre>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const THEME_KEY = "dt-theme";
+    const runningJobs = new Set();
+
+    function fillServiceSelect(select, services, { noneLabel, defaultNone = true } = {}) {
+      select.innerHTML = "";
+      if (noneLabel) {
+        const noneOpt = document.createElement("option");
+        noneOpt.value = "none";
+        noneOpt.textContent = noneLabel;
+        select.appendChild(noneOpt);
+      }
+      const randomOpt = document.createElement("option");
+      randomOpt.value = "random";
+      randomOpt.textContent = "Random";
+      select.appendChild(randomOpt);
+      for (const name of services) {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        select.appendChild(opt);
+      }
+      select.value = defaultNone && noneLabel ? "none" : "random";
+    }
+
+    function show(el, data) {
+      el.textContent = typeof data === "string" ? data : JSON.stringify(data, null, 2);
+    }
+
+    function injectionBody(faultId, delayId, delaySecondsId) {
+      const body = {
+        fault_service: $(faultId).value,
+        delay_service: $(delayId).value,
+      };
+      const delayRaw = $(delaySecondsId).value;
+      if (delayRaw) body.delay_seconds = Number(delayRaw);
+      return body;
+    }
+
+    function formatElapsed(ms) {
+      const total = Math.floor(ms / 1000);
+      const m = Math.floor(total / 60);
+      const s = total % 60;
+      return m > 0 ? `${m}m ${String(s).padStart(2, "0")}s` : `${s}s`;
+    }
+
+    function expectedDelayLabel(secondsInputId, delaySelectId) {
+      const delayService = delaySelectId ? $(delaySelectId).value : "";
+      if (delayService === "none") return "Configured delay: none";
+      const raw = $(secondsInputId).value;
+      if (raw) {
+        const sec = Number(raw);
+        return `Configured delay: ${sec}s (~${formatElapsed(sec * 1000)})`;
+      }
+      return "Configured delay: random 120–300s (2–5 minutes)";
+    }
+
+    function startLongRun({ jobId, progressId, elapsedId, hintId, submitId, secondsInputId, delaySelectId, hintText }) {
+      runningJobs.add(jobId);
+      const progress = $(progressId);
+      const submit = $(submitId);
+      progress.classList.add("is-active");
+      submit.disabled = true;
+      $(hintId).textContent = `${hintText} ${expectedDelayLabel(secondsInputId, delaySelectId)}`;
+      const started = Date.now();
+      $(elapsedId).textContent = "0s";
+      const timer = setInterval(() => {
+        $(elapsedId).textContent = formatElapsed(Date.now() - started);
+      }, 1000);
+      return () => {
+        clearInterval(timer);
+        progress.classList.remove("is-active");
+        submit.disabled = false;
+        runningJobs.delete(jobId);
+      };
+    }
+
+    async function postJSON(url, body) {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({ error: res.statusText }));
+      if (!res.ok) throw Object.assign(new Error("request failed"), { data, status: res.status });
+      return data;
+    }
+
+    function applyTheme(theme) {
+      const dark = theme === "dark";
+      document.documentElement.classList.toggle("pf-v6-theme-dark", dark);
+      const btn = $("themeToggle");
+      btn.textContent = dark ? "Light mode" : "Dark mode";
+      btn.setAttribute("aria-pressed", dark ? "true" : "false");
+      localStorage.setItem(THEME_KEY, dark ? "dark" : "light");
+    }
+
+    function initTheme() {
+      const saved = localStorage.getItem(THEME_KEY);
+      // Default to dark unless the user explicitly chose light.
+      applyTheme(saved === "light" ? "light" : "dark");
+    }
+
+    $("themeToggle").addEventListener("click", () => {
+      const next = document.documentElement.classList.contains("pf-v6-theme-dark") ? "light" : "dark";
+      applyTheme(next);
+    });
+
+    window.addEventListener("beforeunload", (event) => {
+      if (runningJobs.size === 0) return;
+      event.preventDefault();
+      event.returnValue = "";
+    });
+
+    async function init() {
+      const meta = await fetch("/api/meta").then((r) => r.json());
+      const chainDelay = meta.chain_delay_seconds || { min: 1.01, max: 60 };
+      const delayInput = $("delaySeconds");
+      delayInput.min = chainDelay.min;
+      delayInput.max = chainDelay.max;
+      $("delaySecondsLabel").textContent =
+        `Delay seconds (${chainDelay.min}–${chainDelay.max})`;
+      $("chainDelayHint").textContent =
+        `One service fails; another is delayed ${chainDelay.min}–${chainDelay.max}s.`;
+      $("metaLine").textContent =
+        `Serving as ${meta.service} · CQRS ${meta.cqrs_command_url} → ${meta.cqrs_query_url} · outbox→${meta.outbox_target_url} · chain delay ${chainDelay.min}-${chainDelay.max}s · pattern delay ${meta.pattern_delay_seconds.min}-${meta.pattern_delay_seconds.max}s`;
+      fillServiceSelect($("faultService"), meta.chain_services || [], { noneLabel: "No error" });
+      fillServiceSelect($("delayService"), meta.chain_services || [], { noneLabel: "No delay" });
+      fillServiceSelect($("cqrsFault"), meta.cqrs_participants || [], { noneLabel: "No error" });
+      fillServiceSelect($("cqrsDelay"), meta.cqrs_participants || [], { noneLabel: "No delay" });
+      fillServiceSelect($("outboxFault"), meta.outbox_participants || [], { noneLabel: "No error" });
+      fillServiceSelect($("outboxDelay"), meta.outbox_participants || [], { noneLabel: "No delay" });
+    }
+
+    $("chainForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      show($("chainResult"), "Running chain…");
+      try {
+        show($("chainResult"), await postJSON("/api/chain", injectionBody("faultService", "delayService", "delaySeconds")));
+      } catch (err) {
+        show($("chainResult"), err.data || String(err));
+      }
+    });
+
+    $("cqrsForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const stop = startLongRun({
+        jobId: "cqrs",
+        progressId: "cqrsProgress",
+        elapsedId: "cqrsElapsed",
+        hintId: "cqrsProgressHint",
+        submitId: "cqrsSubmit",
+        secondsInputId: "cqrsDelaySeconds",
+        delaySelectId: "cqrsDelay",
+        hintText: "Keep this tab open.",
+      });
+      show($("cqrsResult"), "Running CQRS…");
+      try {
+        show($("cqrsResult"), await postJSON("/api/cqrs/start", {
+          item: $("cqrsItem").value,
+          quantity: Number($("cqrsQty").value),
+          ...injectionBody("cqrsFault", "cqrsDelay", "cqrsDelaySeconds"),
+        }));
+      } catch (err) {
+        show($("cqrsResult"), err.data || String(err));
+      } finally {
+        stop();
+      }
+    });
+
+    $("outboxForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const stop = startLongRun({
+        jobId: "outbox",
+        progressId: "outboxProgress",
+        elapsedId: "outboxElapsed",
+        hintId: "outboxProgressHint",
+        submitId: "outboxSubmit",
+        secondsInputId: "outboxDelaySeconds",
+        delaySelectId: "outboxDelay",
+        hintText: "Keep this tab open.",
+      });
+      show($("outboxResult"), "Running inbox/outbox…");
+      try {
+        show($("outboxResult"), await postJSON("/api/outbox/start", {
+          note: $("outboxNote").value,
+          body: { note: $("outboxNote").value, kind: "demo" },
+          ...injectionBody("outboxFault", "outboxDelay", "outboxDelaySeconds"),
+        }));
+      } catch (err) {
+        show($("outboxResult"), err.data || String(err));
+      } finally {
+        stop();
+      }
+    });
+
+    initTheme();
+    init().catch((err) => {
+      $("metaLine").textContent = `Failed to load metadata: ${err}`;
+    });
+  </script>
+</body>
+</html>

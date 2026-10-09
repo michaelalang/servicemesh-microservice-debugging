@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-tempo
+  namespace: distributed-tracing
+data:
+  TEMPOADDR: tempo.distributed-tracing.svc.cluster.local:4318

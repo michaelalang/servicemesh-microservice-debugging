@@ -1,0 +1,27 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- analytics-service.yml
+- api-gateway.yml
+- audit-service.yml
+- auth-service.yml
+- backend.yml
+- billing-service.yml
+- cart-service.yml
+- catalog-service.yml
+- frontend.yml
+- inventory-service.yml
+- notification-service.yml
+- order-service.yml
+- payment-service.yml
+- recommendation-service.yml
+- reporting-service.yml
+- review-service.yml
+- search-service.yml
+- session-service.yml
+- shipping-service.yml
+- user-service.yml
+- tempo-service.yml
+- grafana-service.yml
+
+namespace: distributed-tracing

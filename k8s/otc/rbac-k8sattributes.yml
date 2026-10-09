@@ -1,0 +1,89 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: otel-k8sattributes
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "namespaces", "nodes", "replicasets"]
+    verbs: ["get", "watch", "list"]
+  - apiGroups: ["apps"]
+    resources: ["daemonsets", "deployments", "statefulsets", "replicasets"]
+    verbs: ["get", "watch", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: otel-k8sattributes
+  namespace: distributed-tracing
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: otel-k8sattributes
+subjects:
+- kind: ServiceAccount
+  name: analytics-service
+  namespace: distributed-tracing
+- kind: ServiceAccount
+  name: api-gateway
+  namespace: distributed-tracing
+- kind: ServiceAccount
+  name: audit-service
+  namespace: distributed-tracing
+- kind: ServiceAccount
+  name: auth-service
+  namespace: distributed-tracing
+- kind: ServiceAccount
+  name: backend
+  namespace: distributed-tracing
+- kind: ServiceAccount
+  name: billing-service
+  namespace: distributed-tracing
+- kind: ServiceAccount
+  name: cart-service
+  namespace: distributed-tracing
+- kind: ServiceAccount
+  name: catalog-service
+  namespace: distributed-tracing
+- kind: ServiceAccount
+  name: frontend
+  namespace: distributed-tracing
+- kind: ServiceAccount
+  name: gateway-v1
+  namespace: distributed-tracing
+- kind: ServiceAccount
+  name: inventory-service
+  namespace: distributed-tracing
+- kind: ServiceAccount
+  name: notification-service
+  namespace: distributed-tracing
+- kind: ServiceAccount
+  name: order-service
+  namespace: distributed-tracing
+- kind: ServiceAccount
+  name: payment-service
+  namespace: distributed-tracing
+- kind: ServiceAccount
+  name: recommendation-service
+  namespace: distributed-tracing
+- kind: ServiceAccount
+  name: reporting-service
+  namespace: distributed-tracing
+- kind: ServiceAccount
+  name: review-service
+  namespace: distributed-tracing
+- kind: ServiceAccount
+  name: search-service
+  namespace: distributed-tracing
+- kind: ServiceAccount
+  name: session-service
+  namespace: distributed-tracing
+- kind: ServiceAccount
+  name: shipping-service
+  namespace: distributed-tracing
+- kind: ServiceAccount
+  name: user-service
+  namespace: distributed-tracing
+- kind: ServiceAccount
+  name: gw1
+  namespace: distributed-tracing
+

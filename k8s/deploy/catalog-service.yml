@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    sidecar.istio.io/nativeSidecar: 'true'
+    sidecar.opentelemetry.io/inject: catalog-service
+  name: catalog-service
+  namespace: distributed-tracing
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: catalog-service
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/nativeSidecar: 'true'
+        sidecar.opentelemetry.io/inject: catalog-service
+      creationTimestamp: null
+      labels:
+        app: catalog-service
+    spec:
+      containers:
+        - env:
+            - name: SERVICE_NAME
+              value: catalog-service
+            - name: PORT
+              value: '8080'
+            - name: NEXT_APP
+              value: http://search-service:8080
+          image: localhost/distributed-tracing:v1.0.0
+          imagePullPolicy: Always
+          name: catalog-service
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: catalog-service
+      serviceAccountName: catalog-service
+      terminationGracePeriodSeconds: 30

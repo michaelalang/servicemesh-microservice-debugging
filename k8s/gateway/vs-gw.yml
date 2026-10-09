@@ -1,0 +1,26 @@
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: tempo-gateway-routing
+  namespace: distributed-tracing
+spec:
+  hosts:
+  - "tempo.local"
+  gateways:
+  - distributed-tracing/gateway-v1
+  http:
+  - match:
+    - port: 14318
+    route:
+    - destination:
+        host: tempo.local
+        port:
+          number: 14318
+  tcp:
+  - match:
+    - port: 14317
+    route:
+    - destination:
+        host: tempo.local
+        port:
+          number: 14317
